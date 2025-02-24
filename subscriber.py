@@ -3,6 +3,7 @@
 from confluent_kafka import Consumer, KafkaError, KafkaException
 import sys
 import time
+import json
 
 running = True
 
@@ -11,17 +12,59 @@ conf = {
     #  Group ID (mandatory) - specify which consumer group the consumer is a member of
     'group.id': 'foo',
     # Auto offset reset - specifies what offset the consumer should start reading from in the event
-    'auto.offset.reset': 'latest'
+    'auto.offset.reset': 'earliest',
+    'enable.auto.commit': True 
 }
 
 consumer = Consumer(conf)
 
+order_total = 0 
+order_sum = 0
+order_amounts = []
+customer_order_summary = {}
 
 def msg_process(msg):
+    msg_payload = msg.value().decode("utf-8")
+
+    global order_total
+    global order_sum
+    global order_amounts
+    global customer_order_summary
+
+    payload_dict = json.loads(msg_payload)
+
+
+
+    order_id = str(payload_dict["order_id"])
+    amount = payload_dict["amount"]
+    customer_id = str(payload_dict["customer_id"])
+    order_total += 1
+    order_sum += int(amount)
+    order_amounts.append(amount)
+    if customer_id in customer_order_summary.keys():
+        customer_order_summary[f"Sales for customer ID: {customer_id}"] += 1
+    else:
+        customer_order_summary[f"Sales for customer ID {customer_id}"] = 1
+
     """Prints the received Kafka message."""
-    print(f"Received: {msg}\nPayload:{msg.value().decode('utf-8')}\nPartition:{msg.partition()}\nOffset:{msg.offset()}")
+    print(f"""
+        New Event Received: {msg}\n
+        Order ID: {order_id}\n
+        Customer ID: {customer_id}\n
+        Amount: {amount}\n\n
+        Summary Stats:\n
+        The total orders received: {order_total}\n
+        The total amount of all orders received so far: {order_sum}\n
+        Average (mean) order value: {order_sum / order_total}\n
+        Max amount: {max(order_amounts)}\n
+        Min amount: {min(order_amounts)}\n
 
+        Summary stats by customer:
+        {customer_order_summary}
+        """)
+    
 
+    
 def start_consume_loop(consumer, topic):
     try: 
         consumer.subscribe(topic)
@@ -41,7 +84,21 @@ def start_consume_loop(consumer, topic):
     finally:
         consumer.close()
 
-start_consume_loop(consumer, ['orders'])
+start_consume_loop(consumer, ['online-orders'])
 
 
 
+
+"""
+Your task will be to write a small Python program to subscribe to events in the same topic and maintain some aggregated analytics data:
+
+The total number of orders received so far
+The total amount of all orders received so far
+The mean average order value
+The max and min amount so far
+The program should also print to the terminal the updated values whenever it receives new events.
+
+Here is an example of what the output could look like:
+
+
+"""
