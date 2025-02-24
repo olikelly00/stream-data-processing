@@ -13,11 +13,9 @@ conf = {
     # Unique id for the producer
     'client.id': socket.gethostname()
 }
-
+order_id = 0
 # Create producer instance and pass it parameters
 producer = Producer(conf)
-
-order_id = 0
 
 customer_ids = list(range(1,20))
 

@@ -1,5 +1,3 @@
-
-
 from confluent_kafka import Consumer, KafkaError, KafkaException
 import sys
 import time
@@ -9,9 +7,9 @@ running = True
 
 conf = {
     'bootstrap.servers': 'localhost:9092',
-    #  Group ID (mandatory) - specify which consumer group the consumer is a member of
+    #  Group ID (mandatory) - specify which consumer group the consumer is a member of.
     'group.id': 'foo',
-    # Auto offset reset - specifies what offset the consumer should start reading from in the event
+    # Auto offset reset - specifies what offset the consumer should start reading from in the event.
     'auto.offset.reset': 'earliest',
     'enable.auto.commit': True 
 }
@@ -32,8 +30,6 @@ def msg_process(msg):
     global customer_order_summary
 
     payload_dict = json.loads(msg_payload)
-
-
 
     order_id = str(payload_dict["order_id"])
     amount = payload_dict["amount"]
@@ -60,10 +56,9 @@ def msg_process(msg):
         Min amount: {min(order_amounts)}\n
 
         Summary stats by customer:
-        {customer_order_summary}
+        {[item for item in customer_order_summary]}
         """)
     
-
     
 def start_consume_loop(consumer, topic):
     try: 
@@ -86,19 +81,3 @@ def start_consume_loop(consumer, topic):
 
 start_consume_loop(consumer, ['online-orders'])
 
-
-
-
-"""
-Your task will be to write a small Python program to subscribe to events in the same topic and maintain some aggregated analytics data:
-
-The total number of orders received so far
-The total amount of all orders received so far
-The mean average order value
-The max and min amount so far
-The program should also print to the terminal the updated values whenever it receives new events.
-
-Here is an example of what the output could look like:
-
-
-"""
